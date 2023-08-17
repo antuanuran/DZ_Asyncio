@@ -25,19 +25,23 @@ async def format_data(client, urls, result_key):
 
 async def grab_star_wars_info(person_id):
     async with httpx.AsyncClient() as client:
+        print('Начало загрузки данных....')
         data = await grab_by_url(client, f'https://swapi.dev/api/people/{person_id}/')
+
+        print('Форматировние строк....')
         data['homeworld'] = (await grab_by_url(client, data['homeworld']))['name']
         data['films'] = await format_data(client, data['films'], 'title')
         data['species'] = await format_data(client, data['species'], 'name')
         data['vehicles'] = await format_data(client, data['vehicles'], 'name')
         data['starships'] = await format_data(client, data['starships'], 'name')
+        print('Данные загружены....')
 
     return data
 
 
 async def upload_to_db(data):
     pprint(data)
-    print('LOAD in Database.......\n')
+    print('Загрузка в Базу Данных....')
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -47,8 +51,7 @@ async def upload_to_db(data):
         new_person = People(json=data)
         session.add(new_person)
         await session.commit()
-
-    print('Finish')
+        print('Завершено')
 
 
 async def main(person_id):
